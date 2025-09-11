@@ -27,5 +27,12 @@
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+   "scripts": {
+    "version": "git rev-list --count HEAD > src/version.txt",
+    "dev": "next dev",
+    "build": "npm run version && next build",
+    "start": "next start"
   }
+    
 }
