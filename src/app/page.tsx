@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Mapa from "@/components/Mapa";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const router = useRouter();
@@ -59,7 +60,9 @@ export default function Home() {
         {/* Mapa */}
         <section className="w-4/5">
           <Mapa />
-        </section>
+          
+        </section>        
+        
 
         {/* Alertas */}
         <section className="w-1/5 bg-gray-100 p-4 overflow-y-auto border-l">
@@ -77,6 +80,7 @@ export default function Home() {
           </ul>
         </section>
       </div>
+      <Footer />
     </main>
   );
 }
