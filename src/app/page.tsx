@@ -1,8 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 import Mapa from "@/components/Mapa";
 
 export default function Home() {
+  const router = useRouter();
+  const [session, setSession] = useState<any>(null);
+
   // Datos ficticios de alertas
   const alertas = [
     { id: 1, ciudad: "Madrid", nivel: "⚠️ Naranja", detalle: "Tormentas intensas" },
@@ -13,29 +19,54 @@ export default function Home() {
     { id: 6, ciudad: "Málaga", nivel: "⚠️ Naranja", detalle: "Precipitaciones intensas" },
   ];
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.push("/login");
+      else setSession(data.session);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) router.push("/login");
+      else setSession(session);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, [router]);
+
+  if (!session) return <p className="p-4">🔒 Redirigiendo al login...</p>;
+
   return (
     <main className="flex flex-col h-screen">
-      {/* Encabezado */}
-      <header className="bg-blue-600 text-white text-center p-4 text-xl font-bold shadow-md">
-        🌦️ Alertas Meteorológicas en España
+      {/* Header */}
+      <header className="bg-blue-600 text-white text-center p-4 text-xl font-bold shadow-md flex justify-between items-center">
+        <span>🌦️ Alertas Meteorológicas en España</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm">Usuario: {session.user.email}</span>
+          <button
+            className="bg-red-500 px-2 py-1 rounded hover:bg-red-600 text-white text-sm"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push("/login");
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
-      {/* Contenido principal en 80% mapa / 20% alertas */}
+      {/* Contenido */}
       <div className="flex flex-row flex-grow">
-        {/* Mapa (80% ancho) */}
+        {/* Mapa */}
         <section className="w-4/5">
           <Mapa />
         </section>
 
-        {/* Panel de últimas alertas (20% ancho) */}
+        {/* Alertas */}
         <section className="w-1/5 bg-gray-100 p-4 overflow-y-auto border-l">
           <h2 className="text-lg font-semibold mb-2">Últimas alertas</h2>
           <ul className="space-y-2">
             {alertas.map((alerta) => (
-              <li
-                key={alerta.id}
-                className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition"
-              >
+              <li key={alerta.id} className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">{alerta.ciudad}</span>
                   <span>{alerta.nivel}</span>
