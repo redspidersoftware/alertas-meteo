@@ -5,13 +5,21 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Mapa from "@/components/Mapa";
 import Footer from "@/components/Footer";
+import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
   const router = useRouter();
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   // Datos ficticios de alertas
-  const alertas = [
+  interface Alerta {
+    id: number;
+    ciudad: string;
+    nivel: string;
+    detalle: string;
+  }
+
+  const alertas: Alerta[] = [
     { id: 1, ciudad: "Madrid", nivel: "⚠️ Naranja", detalle: "Tormentas intensas" },
     { id: 2, ciudad: "Valencia", nivel: "🟡 Amarillo", detalle: "Lluvias moderadas" },
     { id: 3, ciudad: "Sevilla", nivel: "🔴 Rojo", detalle: "Ola de calor extremo" },
@@ -21,11 +29,13 @@ export default function Home() {
   ];
 
   useEffect(() => {
+    // Obtener sesión inicial
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) router.push("/login");
       else setSession(data.session);
     });
 
+    // Listener de cambios de sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) router.push("/login");
       else setSession(session);
@@ -60,16 +70,17 @@ export default function Home() {
         {/* Mapa */}
         <section className="w-4/5">
           <Mapa />
-          
-        </section>        
-        
+        </section>
 
         {/* Alertas */}
         <section className="w-1/5 bg-gray-100 p-4 overflow-y-auto border-l">
           <h2 className="text-lg font-semibold mb-2">Últimas alertas</h2>
           <ul className="space-y-2">
             {alertas.map((alerta) => (
-              <li key={alerta.id} className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition">
+              <li
+                key={alerta.id}
+                className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition"
+              >
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">{alerta.ciudad}</span>
                   <span>{alerta.nivel}</span>
@@ -80,6 +91,7 @@ export default function Home() {
           </ul>
         </section>
       </div>
+
       <Footer />
     </main>
   );
