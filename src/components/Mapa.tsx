@@ -46,7 +46,7 @@ export default function Mapa() {
   return (
     <MapContainer
       center={[40.4168, -3.7038]} // Madrid
-      zoom={6}
+      zoom={7}
       style={{ height: "100vh", width: "100%" }}
     >
       <TileLayer
