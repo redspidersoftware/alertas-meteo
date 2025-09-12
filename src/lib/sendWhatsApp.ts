@@ -6,14 +6,11 @@ const client = twilio(
 );
 
 export interface WhatsAppMessage {
-  to: string;        // Número destino (ej: "+34611222333")
-  message: string;   // Texto del mensaje
-  imageUrl?: string; // Opcional
+  to: string;
+  message: string;
+  imageUrl?: string;
 }
 
-/**
- * Envía mensajes de WhatsApp a uno o varios números usando Twilio
- */
 export async function sendWhatsAppMessages(messages: WhatsAppMessage[]) {
   const results = [];
 
@@ -27,8 +24,9 @@ export async function sendWhatsAppMessages(messages: WhatsAppMessage[]) {
       });
 
       results.push({ to: msg.to, sid: response.sid, status: "sent" });
-    } catch (error: any) {
-      results.push({ to: msg.to, error: error.message, status: "failed" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error desconocido";
+      results.push({ to: msg.to, error: message, status: "failed" });
     }
   }
 
