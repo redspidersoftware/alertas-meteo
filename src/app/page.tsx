@@ -28,14 +28,33 @@ export default function Home() {
     { id: 6, ciudad: "Málaga", nivel: "⚠️ Naranja", detalle: "Precipitaciones intensas" },
   ];
 
+  // --- función para enviar WhatsApp ---
+  const enviarWhatsApp = async (alerta: Alerta) => {
+    try {
+      const res = await fetch("/api/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipients: ["+34630459167"], // 🔹 Cambia a los números que quieras
+          message: `🌦️ Alerta en ${alerta.ciudad} (${alerta.nivel}): ${alerta.detalle}`,
+          // imageUrl: "https://tuimagen.com/alerta.png" // opcional
+        }),
+      });
+
+      const data = await res.json();
+      console.log("WhatsApp enviado:", data);
+      alert(`📲 WhatsApp enviado: ${alerta.ciudad}`);
+    } catch (error) {
+      console.error("Error enviando WhatsApp", error);
+    }
+  };
+
   useEffect(() => {
-    // Obtener sesión inicial
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) router.push("/login");
       else setSession(data.session);
     });
 
-    // Listener de cambios de sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) router.push("/login");
       else setSession(session);
@@ -79,7 +98,8 @@ export default function Home() {
             {alertas.map((alerta) => (
               <li
                 key={alerta.id}
-                className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition"
+                className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition cursor-pointer"
+                onClick={() => enviarWhatsApp(alerta)} // 🔹 Click -> envía WhatsApp
               >
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">{alerta.ciudad}</span>
