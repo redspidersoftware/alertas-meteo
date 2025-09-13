@@ -14,6 +14,8 @@ import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 import L from "leaflet";
 import type { AlertaAemet } from "@/lib/aemetTar";
+import React from "react"; // ✅ necesario para React.Fragment
+
 
 interface MapaProps {
   alertas?: AlertaAemet[];
@@ -78,8 +80,10 @@ export default function Mapa({ alertas }: MapaProps) {
   alerta.info
     ?.filter((info) => info.language === "es-ES")
     .map((info, i) =>
-      info.area?.map((area, areaIdx) => {
+      // Aseguramos que info.area sea siempre un array
+      (Array.isArray(info.area) ? info.area : []).map((area, areaIdx) => {
         if (!area.polygon) return null;
+
         const positions = parsePolygon(area.polygon);
         if (positions.length < 3) return null;
 
@@ -88,13 +92,12 @@ export default function Mapa({ alertas }: MapaProps) {
         const center = getPolygonCenter(positions) as [number, number];
 
         return (
-          <>
+          <React.Fragment key={`${aIdx}-${i}-${areaIdx}`}>
             <Polygon
-              key={`polygon-${aIdx}-${i}-${areaIdx}`}
               positions={positions}
               pathOptions={{ color: "orange", fillColor: "orange", fillOpacity: 1 }}
             />
-            <Marker key={`marker-${aIdx}-${i}-${areaIdx}`} position={center}>
+            <Marker position={center}>
               <Popup>
                 🚨 {info.event ?? "Alerta"} - Nivel:{" "}
                 {Array.isArray(info.parameter)
@@ -104,12 +107,11 @@ export default function Mapa({ alertas }: MapaProps) {
                   : "N/A"}
               </Popup>
             </Marker>
-          </>
+          </React.Fragment>
         );
       })
     )
 )}
-
 
     </MapContainer>
   );

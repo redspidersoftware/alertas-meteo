@@ -74,12 +74,13 @@ export default function Home() {
         // Log de coordenadas de polígonos
         datos?.forEach((alerta) =>
           alerta.info?.forEach((info) =>
-            info.area?.forEach((area) => {
-              if (area.polygon) console.log("Polígono alerta:", info.event, area.polygon);
+            (Array.isArray(info.area) ? info.area : []).forEach((area) => {
+              if (area.polygon)
+                console.log("Polígono alerta:", info.event, area.polygon);
             })
           )
         );
-
+        
         setAlertas(datos ?? []);
       } catch (error) {
         console.error("Error cargando alertas de AEMET:", error);
