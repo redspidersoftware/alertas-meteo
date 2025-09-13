@@ -6,13 +6,48 @@ import { supabase } from "@/lib/supabaseClient";
 import Mapa from "@/components/Mapa";
 import Footer from "@/components/Footer";
 import type { Session } from "@supabase/supabase-js";
-import { getAlertasAemet } from "@/lib/aemet";
-import type { AlertaAemet } from "@/lib/aemetTar";
 
 export default function Home() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
-  const [alertas, setAlertas] = useState<AlertaAemet[]>([]);
+
+  // Datos ficticios de alertas
+  interface Alerta {
+    id: number;
+    ciudad: string;
+    nivel: string;
+    detalle: string;
+  }
+
+  const alertas: Alerta[] = [
+    { id: 1, ciudad: "Madrid", nivel: "⚠️ Naranja", detalle: "Tormentas intensas" },
+    { id: 2, ciudad: "Valencia", nivel: "🟡 Amarillo", detalle: "Lluvias moderadas" },
+    { id: 3, ciudad: "Sevilla", nivel: "🔴 Rojo", detalle: "Ola de calor extremo" },
+    { id: 4, ciudad: "Barcelona", nivel: "⚠️ Naranja", detalle: "Vientos fuertes" },
+    { id: 5, ciudad: "Bilbao", nivel: "🟡 Amarillo", detalle: "Granizo leve" },
+    { id: 6, ciudad: "Málaga", nivel: "⚠️ Naranja", detalle: "Precipitaciones intensas" },
+  ];
+
+  // --- función para enviar WhatsApp ---
+  const enviarWhatsApp = async (alerta: Alerta) => {
+    try {
+      const res = await fetch("/api/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipients: ["+34630459167"], // 🔹 Cambia a los números que quieras
+          message: `🌦️ Alerta en ${alerta.ciudad} (${alerta.nivel}): ${alerta.detalle}`,
+          // imageUrl: "https://tuimagen.com/alerta.png" // opcional
+        }),
+      });
+
+      const data = await res.json();
+      console.log("WhatsApp enviado:", data);
+      alert(`📲 WhatsApp enviado: ${alerta.ciudad}`);
+    } catch (error) {
+      console.error("Error enviando WhatsApp", error);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -27,18 +62,6 @@ export default function Home() {
 
     return () => listener.subscription.unsubscribe();
   }, [router]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const datos = await getAlertasAemet("72"); // ejemplo: Madrid
-        console.log("✅ Alertas AEMET:", datos);
-        setAlertas(datos);
-      } catch (error) {
-        console.error("Error cargando alertas de AEMET:", error);
-      }
-    })();
-  }, []);
 
   if (!session) return <p className="p-4">🔒 Redirigiendo al login...</p>;
 
@@ -72,48 +95,19 @@ export default function Home() {
         <section className="w-1/5 bg-gray-100 p-4 overflow-y-auto border-l">
           <h2 className="text-lg font-semibold mb-2">Últimas alertas</h2>
           <ul className="space-y-2">
-            {alertas.length === 0 ? (
-              <li className="text-gray-500 text-sm">No hay alertas disponibles</li>
-            ) : (
-              alertas.map((alerta, aIdx) => (
-                <li
-                  key={alerta.identifier ?? aIdx}
-                  className="text-gray-800 text-sm border rounded p-2"
-                >
-                 {alerta.info
-  ?.filter(info => info.language === "es-ES") // 🔹 solo español
-  .map((info, i) => (
-    <div key={i} className="mb-2">
-      <div className="font-semibold">{info.event ?? "Sin evento"}</div>
-      <div className="text-gray-600 text-xs">
-        Nivel:{" "}
-        {Array.isArray(info.parameter)
-          ? info.parameter.find(p => p.valueName === "AEMET-Meteoalerta nivel")?.value ?? "N/A"
-          : "N/A"}
-      </div>
-      <div className="text-gray-600 text-xs">
-        Áreas afectadas:{" "}
-        {info.area?.map((area, areaIdx) => (
-          <span key={areaIdx}>{area.areaDesc}; </span>
-        )) ?? "N/A"}
-      </div>
-      <div className="text-gray-600 text-xs">
-        Más info:{" "}
-        <a
-          href={info.web ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline"
-        >
-          AEMET
-        </a>
-      </div>
-    </div>
-))}
-
-                </li>
-              ))
-            )}
+            {alertas.map((alerta) => (
+              <li
+                key={alerta.id}
+                className="p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition cursor-pointer"
+                onClick={() => enviarWhatsApp(alerta)} // 🔹 Click -> envía WhatsApp
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">{alerta.ciudad}</span>
+                  <span>{alerta.nivel}</span>
+                </div>
+                <p className="text-sm text-gray-600">{alerta.detalle}</p>
+              </li>
+            ))}
           </ul>
         </section>
       </div>

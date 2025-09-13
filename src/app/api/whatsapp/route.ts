@@ -12,8 +12,10 @@ export async function POST(req: NextRequest) {
     console.log("Resultados Twilio:", results);
     return NextResponse.json({ results });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Error desconocido";
-    console.error("Error en API WhatsApp:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }  
 }
